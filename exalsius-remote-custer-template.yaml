@@ -1,0 +1,28 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: exalsius-cluster-templates
+  namespace: default
+spec:
+  interval: 10m
+  url: https://github.com/srnbckr/n-cluster.git
+  ref:
+    branch: main
+---
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterTemplate
+metadata:
+  name: exalsius-netbitd-cluster-0-1-0
+  namespace: default
+spec:
+  helm:
+    chartSpec:
+      chart: cluster-templates/n-cluster
+      version: 0.1.0
+      interval: 10m
+      sourceRef:
+        kind: GitRepository
+        name: exalsius-cluster-templates
+
+
