@@ -13,7 +13,7 @@ spec:
 apiVersion: k0rdent.mirantis.com/v1beta1
 kind: ClusterTemplate
 metadata:
-  name: exalsius-netbitd-cluster-0-1-0
+  name: exalsius-netbird-cluster-0-1-0
   namespace: default
 spec:
   helm:
