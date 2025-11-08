@@ -1,0 +1,102 @@
+{{- $global := .Values.global | default dict }}
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: K0smotronControlPlane
+metadata:
+  name: {{ include "k0smotroncontrolplane.name" . }}
+spec:
+  replicas: {{ .Values.controlPlaneNumber }}
+  version: {{ .Values.k0s.version | replace "+" "-" }}
+  {{- with .Values.k0smotron.controllerPlaneFlags }}
+  controllerPlaneFlags:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.k0smotron.service }}
+  service:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if $global.registry }}
+  image: {{ $global.registry }}/k0sproject/k0s
+  etcd:
+    image: "{{ $global.registry }}/k0sproject/etcd:v3.5.13"
+  {{- if $global.registryCertSecret }}
+  mounts:
+    - path: /usr/local/share/ca-certificates/registry
+      secret:
+        defaultMode: 420
+        items:
+          - key: ca.crt
+            path: ca.crt
+        secretName: {{ $global.registryCertSecret }}
+  {{- end }}
+  {{- end }}
+  k0sConfig:
+    apiVersion: k0s.k0sproject.io/v1beta1
+    kind: ClusterConfig
+    metadata:
+      name: k0s
+    spec:
+      {{- with .Values.k0s.api.extraArgs }}
+      api:
+        extraArgs:
+          {{- toYaml . | nindent 10 }}
+      {{- end }}
+      {{- with .Values.k0s.network }}
+      network: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $global.registry }}
+      images:
+        konnectivity:
+          image: "{{ $global.registry }}/k0sproject/apiserver-network-proxy-agent"
+        metricsserver:
+          image: "{{ $global.registry }}/metrics-server/metrics-server"
+        kubeproxy:
+          image: "{{ $global.registry }}/k0sproject/kube-proxy"
+        coredns:
+          image: "{{ $global.registry }}/k0sproject/coredns"
+        pause:
+          image: "{{ $global.registry }}/pause"
+        calico:
+          cni:
+            image: "{{ $global.registry }}/k0sproject/calico-cni"
+          node:
+            image: "{{ $global.registry }}/k0sproject/calico-node"
+          kubecontrollers:
+            image: "{{ $global.registry }}/k0sproject/calico-kube-controllers"
+      {{- end }}
+      extensions:
+        helm:
+          repositories:
+            {{- if .Values.localStorage.enabled }}
+            - name: openebs
+              url: https://openebs.github.io/openebs
+            {{- end }}
+            {{- with .Values.k0s.extensions.helm.repositories }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          charts:
+            {{- if .Values.localStorage.enabled }}
+            {{- $openebsVersion := "4.3.3" }}
+            {{- $kubeletDir := "/var/lib/k0s/kubelet/" }}
+            {{- $openebsValues := dict }}
+            {{- $_ := set $openebsValues "loki" (dict "enabled" false) }}
+            {{- $_ := set $openebsValues "alloy" (dict "enabled" false) }}
+            {{- $_ := set $openebsValues "engines" (dict "local" (dict "lvm" (dict "enabled" false) "zfs" (dict "enabled" false)) "replicated" (dict "mayastor" (dict "enabled" false))) }}
+            {{- $_ := set $openebsValues "lvm-localpv" (dict "lvmNode" (dict "kubeletDir" $kubeletDir)) }}
+            {{- $hostpathClass := dict "isDefaultClass" true }}
+            {{- if .Values.localStorage.basePath }}
+            {{- $_ := set $hostpathClass "basePath" .Values.localStorage.basePath }}
+            {{- end }}
+            {{- $_ := set $openebsValues "localpv-provisioner" (dict "hostpathClass" $hostpathClass) }}
+            - name: openebs
+              namespace: openebs
+              order: 1
+              chartName: openebs/openebs
+              version: {{ $openebsVersion }}
+              values: |
+{{ toYaml $openebsValues | indent 16 }}
+            {{- end }}
+            {{- with .Values.k0s.extensions.helm.charts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+  persistence:
+    type: emptyDir

@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A KCM cluster remote-cluster template",
+  "type": "object",
+  "properties": {
+    "machinePreStartCommands": {
+      "description": "Commands to run on machines before k0s installation",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "clusterAnnotations": {
+      "description": "Annotations to apply to the cluster",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "clusterIdentity": {
+      "description": "The SSH key secret reference, auto-populated",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The SSH key secret name, auto-populated",
+          "type": "string"
+        }
+      }
+    },
+    "clusterLabels": {
+      "description": "Labels to apply to the cluster",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "clusterNetwork": {
+      "description": "The cluster network configuration",
+      "type": "object",
+      "properties": {
+        "pods": {
+          "description": "The network ranges from which Pod networks are allocated",
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "description": "A list of CIDR blocks",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": ["10.244.0.0/16"]
+            }
+          }
+        },
+        "services": {
+          "description": "The network ranges from which service VIPs are allocated",
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "description": "A list of CIDR blocks",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": ["10.96.0.0/12"]
+            }
+          }
+        }
+      }
+    },
+    "controlPlaneNumber": {
+      "description": "The number of the control plane pods",
+      "type": "number",
+      "minimum": 1,
+      "default": 3
+    },
+    "localStorage": {
+      "description": "Local storage configuration",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Enable local storage provisioner",
+          "type": "boolean",
+          "default": true
+        },
+        "basePath": {
+          "description": "Base path for local storage. If empty, basePath is not configured",
+          "type": "string"
+        }
+      }
+    },
+    "k0s": {
+      "description": "K0s parameters",
+      "type": "object",
+      "properties": {
+        "api": {
+          "description": "Kubernetes API server parameters",
+          "type": "object",
+          "properties": {
+            "extraArgs": {
+              "description": "Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process",
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "arch": {
+          "description": "K0s Download URL Arch",
+          "default": "amd64",
+          "type": "string",
+          "enum": [
+            "amd64",
+            "arm64",
+            "arm"
+          ]
+        },
+        "extensions": {
+          "description": "K0s extensions configuration",
+          "type": "object",
+          "properties": {
+            "helm": {
+              "description": "K0s helm repositories and charts configuration",
+              "type": "object",
+              "properties": {
+                "charts": {
+                  "description": "The list of helm charts to deploy during cluster bootstrap",
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "repositories": {
+                  "description": "The list of Helm repositories for deploying charts during cluster bootstrap",
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "network": {
+          "description": "K0s network configuration",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {
+            "provider": "kuberouter",
+            "kuberouter": {
+              "autoMTU": true,
+              "extraArgs": {
+                "enable-overlay": "true",
+                "overlay-encap": "fou",
+                "overlay-type": "full",
+                "masquerade-all": "true"
+              }
+            }
+          }
+        },
+        "version": {
+          "description": "K0s version",
+          "type": "string",
+          "default": "v1.32.8+k0s.0"
+        }
+      }
+    },
+    "k0smotron": {
+      "description": "K0smotron parameters",
+      "type": "object",
+      "properties": {
+        "controllerPlaneFlags": {
+          "description": "ControlPlaneFlags allows to configure additional flags for k0s control plane and to override existing ones. The default flags are kept unless they are overriden explicitly. Flags with arguments must be specified as a single string, e.g. --some-flag=argument",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "persistence": {
+          "description": "The persistence configuration",
+          "type": "object",
+          "properties": {
+            "type": {
+              "description": "The persistence type",
+              "default": "EmptyDir",
+              "type": "string"
+            }
+          }
+        },
+        "service": {
+          "description": "The API service configuration",
+          "type": "object",
+          "properties": {
+            "apiPort": {
+              "description": "The kubernetes API port. If empty k0smotron will pick it automatically",
+              "type": "number",
+              "maximum": 65535,
+              "minimum": 1,
+              "default": 30443
+            },
+            "konnectivityPort": {
+              "description": "The konnectivity port. If empty k0smotron will pick it automatically",
+              "type": "number",
+              "maximum": 65535,
+              "minimum": 1,
+              "default": 30132
+            },
+            "type": {
+              "description": "An ingress methods for a service",
+              "default": "LoadBalancer",
+              "type": "string",
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "LoadBalancer"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "machines": {
+      "description": "The list of remote machines configurations",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "description": "Address is the IP address or DNS name of the remote machine",
+            "examples": [
+              "10.130.0.237",
+              "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+              "hostname"
+            ],
+            "type": "string"
+          },
+          "k0s": {
+            "description": "k0s worker configuration options",
+            "type": "object",
+            "properties": {
+              "args": {
+                "description": "Args specifies extra arguments to be passed to k0s worker. See: https://docs.k0sproject.io/stable/worker-node-config/ See: https://docs.k0sproject.io/stable/cli/k0s_worker/",
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "port": {
+            "description": "The SSH port of the remote machine",
+            "default": 22,
+            "type": "number",
+            "maximum": 65535,
+            "minimum": 1
+          },
+          "provisionJob": {
+            "description": "The kubernetes Job to use to provision the machine",
+            "type": "object",
+            "properties": {
+              "jobSpecTemplate": {
+                "description": "The job template to use to provision the machine, see: https://docs.k0smotron.io/stable/resource-reference/#remotemachinespecprovisionjobjobspectemplate",
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "description": "Standard object's metadata of the jobs created from this template, see: https://docs.k0smotron.io/stable/resource-reference/#remotemachinespecprovisionjobjobspectemplatemetadata",
+                    "type": "object"
+                  },
+                  "spec": {
+                    "description": "Specification of the desired behavior of the job, see: https://docs.k0smotron.io/stable/resource-reference/#remotemachinespecprovisionjobjobspectemplatespec",
+                    "type": "object"
+                  }
+                }
+              },
+              "scpCommand": {
+                "description": "The scp command",
+                "default": "scp",
+                "type": "string"
+              },
+              "sshCommand": {
+                "description": "The ssh command",
+                "default": "ssh",
+                "type": "string"
+              }
+            }
+          },
+          "useSudo": {
+            "description": "Determines whether to use sudo for k0s cluster bootstrap commands",
+            "default": false,
+            "type": "boolean"
+          },
+          "user": {
+            "description": "The user to use when connecting to the remote machine",
+            "default": "root",
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
