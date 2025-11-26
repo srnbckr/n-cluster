@@ -70,12 +70,15 @@ spec:
             - name: openebs
               url: https://openebs.github.io/openebs
             {{- end }}
+            {{- if .Values.cilium.enabled }}
             - name: cilium
               url: https://helm.cilium.io/
+            {{- end }}
             {{- with .Values.k0s.extensions.helm.repositories }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           charts:
+            {{- if .Values.cilium.enabled }}
             {{- $ciliumVersion := "1.18.4" }}
             {{- $ciliumValues := dict }}
             {{- $_ := set $ciliumValues "kubeProxyReplacement" true }}
@@ -98,6 +101,7 @@ spec:
               version: {{ $ciliumVersion }}
               values: |
 {{ toYaml $ciliumValues | indent 16 }}
+            {{- end }}
             {{- if .Values.localStorage.enabled }}
             {{- $openebsVersion := "4.3.3" }}
             {{- $kubeletDir := "/var/lib/k0s/kubelet/" }}

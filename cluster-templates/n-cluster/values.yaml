@@ -11,7 +11,11 @@ clusterIdentity: # @schema description: The SSH key secret reference, auto-popul
 # Local storage configuration
 localStorage: # @schema description: Local storage configuration; type: object
   enabled: true # @schema description: Enable local storage provisioner; type: boolean; default: true
-  basePath: "" # @schema description: Base path for local storage. If empty, basePath is not configured; type: string      
+  basePath: "" # @schema description: Base path for local storage. If empty, basePath is not configured; type: string
+
+# Cilium CNI configuration
+cilium: # @schema description: Cilium CNI configuration; type: object
+  enabled: true # @schema description: Enable Cilium CNI; type: boolean; default: true      
 
 clusterNetwork: # @schema description: The cluster network configuration; type: object
   pods: # @schema description: The network ranges from which Pod networks are allocated; type: object
