@@ -70,10 +70,34 @@ spec:
             - name: openebs
               url: https://openebs.github.io/openebs
             {{- end }}
+            - name: cilium
+              url: https://helm.cilium.io/
             {{- with .Values.k0s.extensions.helm.repositories }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           charts:
+            {{- $ciliumVersion := "1.18.4" }}
+            {{- $ciliumValues := dict }}
+            {{- $_ := set $ciliumValues "kubeProxyReplacement" true }}
+            {{- $_ := set $ciliumValues "k8sServiceHost" "auto" }}
+            {{- $_ := set $ciliumValues "cni" (dict "enabled" true) }}
+            {{- $ipamOperator := dict "clusterPoolIPv4PodCIDRList" (list "10.244.0.0/16") "clusterPoolIPv4MaskSize" 24 }}
+            {{- $_ := set $ciliumValues "ipam" (dict "mode" "cluster-pool" "operator" $ipamOperator) }}
+            {{- $_ := set $ciliumValues "encryption" (dict "enabled" false) }}
+            {{- $_ := set $ciliumValues "routingMode" "tunnel" }}
+            {{- $_ := set $ciliumValues "tunnelProtocol" "vxlan" }}
+            {{- $_ := set $ciliumValues "autoDirectNodeRoutes" false }}
+            {{- $_ := set $ciliumValues "enableIPv4Masquerade" true }}
+            {{- $_ := set $ciliumValues "enableIPv6Masquerade" false }}
+            {{- $hubbleMetrics := dict "enabled" (list "dns" "drop" "tcp" "flow" "port-distribution" "icmp") }}
+            {{- $_ := set $ciliumValues "hubble" (dict "enabled" true "metrics" $hubbleMetrics) }}
+            - name: cilium
+              namespace: kube-system
+              order: 0
+              chartName: cilium/cilium
+              version: {{ $ciliumVersion }}
+              values: |
+{{ toYaml $ciliumValues | indent 16 }}
             {{- if .Values.localStorage.enabled }}
             {{- $openebsVersion := "4.3.3" }}
             {{- $kubeletDir := "/var/lib/k0s/kubelet/" }}
