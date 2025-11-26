@@ -84,7 +84,7 @@ spec:
             {{- $_ := set $ciliumValues "kubeProxyReplacement" true }}
             {{- $k8sServiceHostRef := dict "name" "cp-api-endpoint" "key" "host" }}
             {{- $_ := set $ciliumValues "k8sServiceHostRef" $k8sServiceHostRef }}
-            {{- $_ := set $ciliumValues "k8sServicePort" "6443" }}
+            {{- $_ := set $ciliumValues "k8sServicePort" "30443" }}
             {{- $_ := set $ciliumValues "cni" (dict "enabled" true) }}
             {{- $ipamOperator := dict "clusterPoolIPv4PodCIDRList" (list "10.244.0.0/16") "clusterPoolIPv4MaskSize" 24 }}
             {{- $_ := set $ciliumValues "ipam" (dict "mode" "cluster-pool" "operator" $ipamOperator) }}
