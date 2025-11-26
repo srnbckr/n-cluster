@@ -78,5 +78,8 @@ spec:
   {{- end }}
   sshKeyRef:
     name: {{ $.Values.clusterIdentity.name }}
+  customCleanUpCommands:
+    - netbird deregister
+    - apt-get remove -y netbird
 ---
 {{- end }}
