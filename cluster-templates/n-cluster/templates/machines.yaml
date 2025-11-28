@@ -82,6 +82,8 @@ spec:
     - "/usr/local/bin/k0s etcd leave"
     - "/usr/local/bin/k0s stop"
     - "/usr/local/bin/k0s reset"
+    - "rm /usr/local/bin/k0s"
+    - "rm /usr/local/bin/k0s-worker-wrapper.sh"
     - "netbird deregister"
     - "apt-get remove -y netbird"
 ---
