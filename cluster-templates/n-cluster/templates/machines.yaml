@@ -79,6 +79,7 @@ spec:
   sshKeyRef:
     name: {{ $.Values.clusterIdentity.name }}
   customCleanUpCommands:
+    - "echo 'hello cleanup begin' > /tmp/cleanup-begin.log"
     - "/usr/local/bin/k0s etcd leave"
     - "/usr/local/bin/k0s stop"
     - "/usr/local/bin/k0s reset"
