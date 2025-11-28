@@ -79,7 +79,10 @@ spec:
   sshKeyRef:
     name: {{ $.Values.clusterIdentity.name }}
   customCleanUpCommands:
-    - netbird deregister
-    - apt-get remove -y netbird
+    - "/usr/local/bin/k0s etcd leave"
+    - "/usr/local/bin/k0s stop"
+    - "/usr/local/bin/k0s reset"
+    - "netbird deregister"
+    - "apt-get remove -y netbird"
 ---
 {{- end }}
